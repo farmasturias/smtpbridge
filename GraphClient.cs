@@ -59,7 +59,7 @@ public class GraphClient
         }
     }
 
-    public async Task<bool> SendMailAsync(string from, List<string> to, string subject, string bodyContent, List<EmailAttachment>? attachments = null)
+    public async Task<bool> SendMailAsync(string from, List<string> to, string subject, string bodyContent, List<EmailAttachment>? attachments = null, bool isHtml = true)
     {
         var token = await GetAccessTokenAsync();
         if (string.IsNullOrEmpty(token)) return false;
@@ -70,7 +70,7 @@ public class GraphClient
         var messageDict = new Dictionary<string, object>
         {
             { "subject", subject },
-            { "body", new { contentType = "HTML", content = bodyContent } },
+            { "body", new { contentType = isHtml ? "HTML" : "Text", content = bodyContent } },
             { "toRecipients", to.Select(email => new { emailAddress = new { address = email } }).ToArray() }
         };
 

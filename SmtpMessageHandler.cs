@@ -38,10 +38,11 @@ public class SmtpMessageHandler : IMessageStore
         var subject = mimeMessage.Subject ?? "Sin Asunto";
         
         // Priorizar el cuerpo del mail en HTML, si no existe toma el de texto plano.
-        var body = mimeMessage.HtmlBody ?? mimeMessage.TextBody ?? string.Empty;
+        var isHtml = !string.IsNullOrEmpty(mimeMessage.HtmlBody);
+        var body = isHtml ? mimeMessage.HtmlBody : mimeMessage.TextBody ?? string.Empty;
 
-        // Limpiar saltos de línea y basura extra de correos extraños (opcional pero seguro)
-        body = body.Trim();
+        // Limpiar basura extra de correos extraños (opcional pero seguro)
+        body = body?.Trim() ?? string.Empty;
 
         var attachments = new List<GraphClient.EmailAttachment>();
         foreach (var attachment in mimeMessage.Attachments.OfType<MimeKit.MimePart>())
@@ -60,7 +61,7 @@ public class SmtpMessageHandler : IMessageStore
         _fileLogger.Log($"----------------------------------------");
         _fileLogger.Log($"SMTP IN: De '{fromBasic}' Para '{string.Join(", ", toBasic)}' Asunto '{subject}' Adjuntos: {attachments.Count}");
 
-        var success = await _graphClient.SendMailAsync(fromBasic, toBasic, subject, body, attachments);
+        var success = await _graphClient.SendMailAsync(fromBasic, toBasic, subject, body, attachments, isHtml);
 
         // Usando la respuesta predefinida correcta para fallos de transacción
         return success ? SmtpResponse.Ok : SmtpResponse.TransactionFailed;
